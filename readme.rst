@@ -1,7 +1,7 @@
 bp_reportbarcode_elaphe
 =================
 
-__Report barcode elaphe to provide more options of barcodes and settings__
+.. Report barcode elaphe to provide more options of barcodes and settings
 
 This module has been built to override the method _report_barcode_ of the class _ReportController_ and provide more types and settings of barcode.
 The behavior is the same as before, as you can see in the snippet below, but we have added a new query parameter(**extraopts**):
