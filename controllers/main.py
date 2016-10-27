@@ -4,17 +4,7 @@
 
 from openerp.addons.report.controllers.main import ReportController
 from openerp.addons.web.http import route, request
-from openerp.tools.safe_eval import safe_eval as eval
-
-import cStringIO
-import re
-
 from werkzeug import exceptions
-
-try:
-    from elaphe import barcode
-except ImportError:
-    pass
 
 
 class ReportBarcodeController(ReportController):
@@ -44,31 +34,14 @@ class ReportBarcodeController(ReportController):
             return super(ReportBarcodeController, self).report_barcode(
                 type, value, width, height, humanreadable
             )
+        else:
+            try:
+                barcode = request.env['report'].generate_barcode(
+                    type, value, kw, width, height
+                )
+            except (ValueError, AttributeError):
+                raise exceptions.HTTPException(
+                    description='Cannot convert into barcode.')
 
-        width = int(width)
-        height = int(height)
-        scale = float(kw.get('scale', 2.0))
-        margin = float(kw.get('barmargin', 0))
-        extra_opts = {}
-        barcode_out = cStringIO.StringIO()
-        if kw.get('extraopts', False):
-            for opt in kw['extraopts'].split(','):
-                key = opt.split(':')[0]
-                values = opt.split(':')[1]
-                if re.search(r'^(?:[0-9a-fA-F]{3}){1,2}$', values) is None:
-                    values = eval(values)
-                extra_opts[key] = values
-        print type, str(value), extra_opts, scale, margin
-        try:
-            barcode_img = barcode(type, str(value), extra_opts, scale=scale,
-                                  margin=margin)
-            if width and height:
-                barcode_img = barcode_img.resize((width, height))
-            barcode_img.save(barcode_out, "png", resolution=100.0)
-        except (ValueError, AttributeError):
-            raise exceptions.HTTPException(
-                description='Cannot convert into barcode.')
-
-        return request.make_response(barcode_out.getvalue(),
-                                     headers=[('Content-Type', 'image/png')])
-
+            return request.make_response(barcode, headers=[
+                ('Content-Type', 'image/png')])
